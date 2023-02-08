@@ -1,27 +1,53 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final helloWorldProvider = Provider((_) => 'Hello world');
+class Logger extends ProviderObserver {
+  @override
+  void didUpdateProvider(
+      ProviderBase<Object?> provider,
+      Object? previousValue,
+      Object? newValue,
+      ProviderContainer container
+  ) {
+    print('''
+{
+  "provider": "${provider.name ?? provider.runtimeType}"
+  "newValue": "$newValue"
+}'''
+    );
+  }
+}
 
 void main() {
   runApp(
-    ProviderScope(
-      child: MyApp(),
-    ),
+    ProviderScope(observers: [Logger()], child: MyApp()),
   );
 }
 
-class MyApp extends ConsumerWidget {
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(home: Home());
+  }
+}
+
+final counterProvider = StateProvider((ref) => 0, name: 'counter');
+
+class Home extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final String value = ref.watch(helloWorldProvider);
+    final count = ref.watch(counterProvider);
 
-    return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(title: const Text('Example')),
-        body: Center(
-          child: Text(value),
-        ),
+    return Scaffold(
+      appBar: AppBar(title: const Text('Counter example')),
+      body: Center(
+        child: Text('$count'),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => ref.read(counterProvider.notifier).state++,
+        child: const Icon(Icons.add),
       ),
     );
   }
